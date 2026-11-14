@@ -1,0 +1,23 @@
+{
+  "_说明": {
+    "用途": "本文件是仓库内所有 Skill 的唯一清单。新增、停用、改名 Skill 只改这里；代码 merge 后同步器会按本清单自动安装/更新。",
+    "skills[].name": "安装到 WorkBuddy 的技能名，全局唯一、建议 kebab-case，且必须与 SKILL.md frontmatter 的 name 一致",
+    "skills[].path": "相对仓库根目录的技能目录路径，目录内必须有 SKILL.md",
+    "skills[].enabled": "false = 代码保留但不安装；从清单移除的条目默认只提示、不自动卸载，除非同步时显式加 --prune"
+  },
+  "version": 1,
+  "skills": [
+    {
+      "name": "skill-repo-manager",
+      "path": "skills/skill-repo-manager",
+      "enabled": true,
+      "description": "维护本 Skill 仓库：新增、登记、校验与发布技能"
+    },
+    {
+      "name": "hello-world",
+      "path": "skills/hello-world",
+      "enabled": false,
+      "description": "最小模板，演示标准目录结构，默认不安装"
+    }
+  ]
+}
