@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -30,6 +31,28 @@ IGNORE = shutil.ignore_patterns(".git", "__pycache__", ".DS_Store", "*.pyc")
 
 def exists(path: Path) -> bool:
     return os.path.lexists(str(path))
+
+
+def fingerprint(path: Path) -> str:
+    """目录内容指纹：只有真正改过文件的 Skill 才需要重新复制。"""
+    digest = hashlib.sha256()
+    if not path.exists():
+        return ""
+    try:
+        files = sorted(p for p in path.rglob("*") if p.is_file())
+    except OSError:
+        return ""
+    for file in files:
+        rel = file.relative_to(path)
+        if any(part in (".git", "__pycache__") for part in rel.parts) or file.suffix == ".pyc":
+            continue
+        try:
+            digest.update(rel.as_posix().encode("utf-8"))
+            digest.update(b"\0")
+            digest.update(file.read_bytes())
+        except OSError:
+            continue
+    return digest.hexdigest()
 
 
 def remove_link(dst: Path) -> None:
@@ -178,7 +201,10 @@ def main() -> int:
             actions[name] = "linked"
             continue
 
-        need = args.changed or args.force or not exists(dst)
+        # 仓库更新时，只有内容指纹变化的技能才重新复制，避免堆积无意义备份
+        need = args.force or not exists(dst) or dst.is_symlink()
+        if not need and args.changed:
+            need = fingerprint(src) != fingerprint(dst)
         if not need:
             actions[name] = "unchanged"
             continue
